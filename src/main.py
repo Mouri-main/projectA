@@ -50,7 +50,7 @@ def batch_process(file_path: str, classifier: SentimentClassifier) -> None:
         prediction = classifier.predict(tokens)
         
         # 出力
-        manage_output.output_result(sentence, prediction)
+        manage_output.output_result(sentence, prediction, "f")
 
 
 def interactive_mode(classifier: SentimentClassifier) -> None:
@@ -75,7 +75,7 @@ def interactive_mode(classifier: SentimentClassifier) -> None:
             prediction = classifier.predict(tokens)
             
             # 出力
-            manage_output.output_result(user_input, prediction)
+            manage_output.output_result(user_input, prediction, "i")
     except EOFError:
         print("\nシステムを終了します。")
         sys.exit(0)
