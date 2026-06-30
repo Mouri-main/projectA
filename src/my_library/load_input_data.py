@@ -10,7 +10,7 @@
   - janome.tokenizer.Tokenizer を使用して単語を原型にする
   - janomeはtokenizerをインポートして使用する
   - 文節は分割するが、例えば、「我慢 し きる ない」は「我慢」「我慢 し」「我慢 し きる」「我慢 し きる ない」すべてが入ってる必要があるので、すべて登録する。
-    - この登録するとき、例えば「我慢」が前に登録されていたら登録せずにスキップ。「我慢 し きる」がない場合は"next"で登録する。
+    - この登録するとき、例えば「我慢」が前に登録されていたら登録せずにスキップ。
   - 英字は半角にする
   - ファイルが存在しない場合は FileNotFoundError
   - ファイルが空の場合は [] を返す
@@ -30,9 +30,6 @@ def _normalize_text(text: str) -> str:
 
 def _generate_phrases(text: str) -> list[str]:
     """
-    先頭から始まる部分列を生成
-
-    例:
     我慢 し きれ ない
 
     ↓
@@ -47,30 +44,16 @@ def _generate_phrases(text: str) -> list[str]:
 
     tokens = text.split()
 
-    results = []
-
-    for i in range(1, len(tokens) + 1):
-        results.append("".join(tokens[:i]))
-
-    return results
+    return [
+        "".join(tokens[:i])
+        for i in range(1, len(tokens) + 1)
+    ]
 
 
-def load(file_path: str) -> dict[str, str]:
+def load_lines(file_path: str) -> list[str]:
     """
-    極性辞書ファイルを読み込む
-
-    Returns
-    -------
-    dict[str, str]
-
-    例:
-    {
-        "我慢": "n",
-        "我慢し": "n",
-        "我慢しきれ": "n",
-        "我慢しきれない": "n",
-        "延命": "e"
-    }
+    ファイルを読み込み、
+    空行除去＋正規化済みの行リストを返す
     """
 
     path = Path(file_path)
@@ -85,9 +68,9 @@ def load(file_path: str) -> dict[str, str]:
     )
 
     if text.strip() == "":
-        return {}
+        return []
 
-    result = {}
+    result = []
 
     for raw_line in text.splitlines():
 
@@ -95,13 +78,27 @@ def load(file_path: str) -> dict[str, str]:
             raw_line.strip()
         )
 
-        if not line:
-            continue
+        if line:
+            result.append(line)
+
+    return result
+
+
+def parse_polarity_data(
+    lines: list[str]
+) -> dict[str, str]:
+    """
+    行リストから
+    単語→極性辞書を作成
+    """
+
+    result = {}
+
+    for line in lines:
 
         parts = line.split("\t")
 
-        # 形式:
-        # ネガ（経験）    我慢 し きれ ない
+        # ネガ（経験） 我慢 し きれ ない
 
         if len(parts) == 2:
 
@@ -123,29 +120,36 @@ def load(file_path: str) -> dict[str, str]:
                     polarity
                 )
 
-        # 形式:
         # 延命 e ～する（行為）
-        #
-        # 良い ~である p
-        #
-        # 二度寝 ~する(行為) 客観 12345678910 n
+        # 良い ～である p
+        # 二度寝 ～する(行為) 客観 12345678910 n
 
         elif len(parts) >= 3:
 
-          word = parts[0]
+            word = parts[0]
 
-          polarity = None
+            polarity = None
 
-          if parts[1] in {"p", "e", "n"}:
-              polarity = parts[1]
+            if parts[1] in {"p", "e", "n"}:
+                polarity = parts[1]
 
-          elif parts[-1] in {"p", "e", "n"}:
-              polarity = parts[-1]
+            elif parts[-1] in {"p", "e", "n"}:
+                polarity = parts[-1]
 
-          if polarity is not None:
-              result.setdefault(
-                  word,
-                  polarity
-              )
+            if polarity is not None:
+                result.setdefault(
+                    word,
+                    polarity
+                )
 
     return result
+
+
+def load(file_path: str) -> dict[str, str]:
+    """
+    極性辞書ファイル読込
+    """
+
+    lines = load_lines(file_path)
+
+    return parse_polarity_data(lines)
