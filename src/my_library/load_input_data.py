@@ -15,7 +15,6 @@
   - ファイルが存在しない場合は FileNotFoundError
   - ファイルが空の場合は [] を返す
 """
-
 from . import tokenizer
 from pathlib import Path
 import unicodedata
