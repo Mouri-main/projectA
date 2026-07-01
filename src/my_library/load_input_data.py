@@ -112,13 +112,17 @@ def parse_polarity_data(
             else:
                 polarity = "e"
 
-            for phrase in _generate_phrases(
-                expression
-            ):
-                result.setdefault(
-                    phrase,
-                    polarity
-                )
+            phrases = _generate_phrases(expression)
+
+            for phrase in phrases[:-1]:
+
+                if phrase not in result:
+                    result[phrase] = "e"
+
+            full_phrase = phrases[-1]
+
+            if full_phrase not in result:
+                result[full_phrase] = polarity
 
         # 延命 e ～する（行為）
         # 良い ～である p
