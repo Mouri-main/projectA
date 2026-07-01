@@ -96,6 +96,9 @@ def parse_polarity_data(
 
     result = {}
 
+    # 正式登録された単語
+    official_words = set()
+
     for line in lines:
 
         parts = line.split("\t")
@@ -103,7 +106,6 @@ def parse_polarity_data(
         #
         # ネガ（経験）    我慢 し きれ ない
         #
-
         if len(parts) == 2:
 
             category = parts[0]
@@ -123,28 +125,31 @@ def parse_polarity_data(
             )
 
             #
-            # 部分列
+            # 部分列を仮登録
             #
-
             for phrase in phrases[:-1]:
 
+                # 既に正式登録済みなら何もしない
+                if phrase in official_words:
+                    continue
+
+                # 未登録なら仮登録
                 if phrase not in result:
                     result[phrase] = "e"
 
             #
-            # 完全語
+            # 完全語を登録
             #
+            full_phrase = phrases[-1]
 
-            result[
-                phrases[-1]
-            ] = polarity
+            if full_phrase not in result:
+                result[full_phrase] = polarity
 
         #
         # 延命 e ～する（行為）
         # 良い ～である p
         # 二度寝 ～する(行為) 客観 12345678910 n
         #
-
         elif len(parts) >= 3:
 
             word = parts[0]
@@ -167,14 +172,15 @@ def parse_polarity_data(
 
             if polarity is not None:
 
-                #
-                # 単独語は必ず上書き
-                #
-
+                # 正式登録なので上書き
                 result[word] = polarity
 
-    return result
+                # 正式登録済みとして記録
+                official_words.add(
+                    word
+                )
 
+    return result
 
 def load(
     file_path: str
