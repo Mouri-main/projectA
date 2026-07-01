@@ -30,6 +30,9 @@ def _normalize_text(text: str) -> str:
 
 def _generate_phrases(text: str) -> list[str]:
     """
+    先頭から始まる部分列を生成
+
+    例:
     我慢 し きれ ない
 
     ↓
@@ -44,10 +47,14 @@ def _generate_phrases(text: str) -> list[str]:
 
     tokens = text.split()
 
-    return [
-        "".join(tokens[:i])
-        for i in range(1, len(tokens) + 1)
-    ]
+    result = []
+
+    for i in range(1, len(tokens) + 1):
+        result.append(
+            "".join(tokens[:i])
+        )
+
+    return result
 
 
 def load_lines(file_path: str) -> list[str]:
@@ -87,10 +94,6 @@ def load_lines(file_path: str) -> list[str]:
 def parse_polarity_data(
     lines: list[str]
 ) -> dict[str, str]:
-    """
-    行リストから
-    単語→極性辞書を作成
-    """
 
     result = {}
 
@@ -98,7 +101,9 @@ def parse_polarity_data(
 
         parts = line.split("\t")
 
-        # ネガ（経験） 我慢 し きれ ない
+        #
+        # ネガ（経験）    我慢 し きれ ない
+        #
 
         if len(parts) == 2:
 
@@ -107,26 +112,39 @@ def parse_polarity_data(
 
             if "ネガ" in category:
                 polarity = "n"
+
             elif "ポジ" in category:
                 polarity = "p"
+
             else:
                 polarity = "e"
 
-            phrases = _generate_phrases(expression)
+            phrases = _generate_phrases(
+                expression
+            )
+
+            #
+            # 部分列
+            #
 
             for phrase in phrases[:-1]:
 
                 if phrase not in result:
                     result[phrase] = "e"
 
-            full_phrase = phrases[-1]
+            #
+            # 完全語
+            #
 
-            if full_phrase not in result:
-                result[full_phrase] = polarity
+            result[
+                phrases[-1]
+            ] = polarity
 
+        #
         # 延命 e ～する（行為）
         # 良い ～である p
         # 二度寝 ～する(行為) 客観 12345678910 n
+        #
 
         elif len(parts) >= 3:
 
@@ -134,26 +152,39 @@ def parse_polarity_data(
 
             polarity = None
 
-            if parts[1] in {"p", "e", "n"}:
+            if parts[1] in {
+                "p",
+                "e",
+                "n"
+            }:
                 polarity = parts[1]
 
-            elif parts[-1] in {"p", "e", "n"}:
+            elif parts[-1] in {
+                "p",
+                "e",
+                "n"
+            }:
                 polarity = parts[-1]
 
             if polarity is not None:
-                result.setdefault(
-                    word,
-                    polarity
-                )
+
+                #
+                # 単独語は必ず上書き
+                #
+
+                result[word] = polarity
 
     return result
 
 
-def load(file_path: str) -> dict[str, str]:
-    """
-    極性辞書ファイル読込
-    """
+def load(
+    file_path: str
+) -> dict[str, str]:
 
-    lines = load_lines(file_path)
+    lines = load_lines(
+        file_path
+    )
 
-    return parse_polarity_data(lines)
+    return parse_polarity_data(
+        lines
+    )
