@@ -96,9 +96,6 @@ def parse_polarity_data(
 
     result = {}
 
-    # 正式登録された単語
-    official_words = set()
-
     for line in lines:
 
         parts = line.split("\t")
@@ -125,25 +122,19 @@ def parse_polarity_data(
             )
 
             #
-            # 部分列を仮登録
+            # 部分列
             #
             for phrase in phrases[:-1]:
 
-                # 既に正式登録済みなら何もしない
-                if phrase in official_words:
-                    continue
-
-                # 未登録なら仮登録
                 if phrase not in result:
                     result[phrase] = "e"
 
             #
-            # 完全語を登録
+            # 完全語
             #
-            full_phrase = phrases[-1]
-
-            if full_phrase not in result:
-                result[full_phrase] = polarity
+            result[
+                phrases[-1]
+            ] = polarity
 
         #
         # 延命 e ～する（行為）
@@ -156,29 +147,18 @@ def parse_polarity_data(
 
             polarity = None
 
-            if parts[1] in {
-                "p",
-                "e",
-                "n"
-            }:
+            if parts[1] in {"p", "e", "n"}:
                 polarity = parts[1]
 
-            elif parts[-1] in {
-                "p",
-                "e",
-                "n"
-            }:
+            elif parts[-1] in {"p", "e", "n"}:
                 polarity = parts[-1]
 
             if polarity is not None:
 
-                # 正式登録なので上書き
+                #
+                # 通常辞書は必ず上書き
+                #
                 result[word] = polarity
-
-                # 正式登録済みとして記録
-                official_words.add(
-                    word
-                )
 
     return result
 
